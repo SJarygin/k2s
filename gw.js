@@ -6,9 +6,11 @@ var kurento = require('kurento-client');
 
 console.log('Detected ' + getIPAddress() + ' IP');
 
-var kurento_addr = '165.22.143.0';//'sipwebrtc2.ddns.net';//'127.0.0.1';
+//var kurento_addr = '165.22.143.0';
+var kurento_addr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
 var kurento_uri = 'ws://' + kurento_addr + ':8888/kurento';
-var playFileUri = "file:///video/demo.webm";
+var playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
+//var playFileUri = "file:///video/demo.webm";
 var recordFileUri = "file:///video/record.webm";
 var kurentoClient = null;
 var call_number = require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
