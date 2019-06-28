@@ -58,7 +58,10 @@ function getIPAddress() {
 function replace_ip(sdp, ip) {
   if (!ip)
     ip = getIPAddress();
-  return sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+  var temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+  //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+  //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+  return temp;
 }
 
 CallMediaPipeline.prototype.createPipeline = function (callback) {
@@ -86,7 +89,7 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
           ua.stop();
           process.exit(0);
         });
-        // console.log('PlayerEndpoint created');
+        console.log('PlayerEndpoint created');
         var recordParams = {
           stopOnEndOfStream: true,
           mediaProfile: 'WEBM_AUDIO_ONLY',
@@ -98,7 +101,7 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
             self.pipeline.rece = recorder;
             // connect to myRTPEndpoint (rx to us)
             rtpe.connect(recorder, function (error) {
-              // console.log('recorder endpoint connected');
+              console.log('recorder endpoint connected');
             });
             rtpe.on('MediaStateChanged', function (event) {
               console.log('MediaStateChanged to ' + event.newState);
@@ -122,7 +125,7 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
       }); // create('PlayerEndpoint')
     }) // create('MediaPipeline')
   }); // getKurentoClient
-} // CallMediaPipeline.prototype.createPipeline
+};// CallMediaPipeline.prototype.createPipeline
 
 var JsSIP = require('jssip');
 const NodeWebSocket = require('jssip-node-websocket');
@@ -317,7 +320,7 @@ ua.on('newRTCSession', function (data) {
         });
         return;
       }
-      // console.log('first remote sdp: ' + data.sdp);
+//      console.log('first remote sdp: ' + data.sdp);
       call.pipeline.sip_offer = data.sdp;
       send_answer_to_kurento(call.pipeline).then(
           result => {
