@@ -4,20 +4,21 @@
 
 var kurento = require('kurento-client');
 
-console.log('Detected ' + getIPAddress() + ' IP');
+console.log(`Detected ${getIPAddress()} IP`);
 
 //var kurento_addr = '165.22.143.0';
-var kurento_addr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
-var kurento_uri = 'ws://' + kurento_addr + ':8888/kurento';
-var playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
+const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
+const _kurentoUri = `ws://${_kurentoAddr}:8888/kurento`;
+const _playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
 //var playFileUri = "file:///video/demo.webm";
-var recordFileUri = "file:///video/record.webm";
-var kurentoClient = null;
-var call_number = require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
-var wait_for_call = require('minimist')(process.argv.slice(2))['wait'];
-var ua;
+const _recordFileUri = "file:///video/record.webm";
+const _callNumber = require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
+const _waitForCall = require('minimist')(process.argv.slice(2))['wait'];
 
-if (!call_number && !wait_for_call) {
+let _kurentoClient = null;
+let _ua;
+
+if (!_callNumber && !_waitForCall) {
   console.log('Usage: nodejs gw.js [--call phone_number] [--wait]');
   process.exit(0);
 }
@@ -27,16 +28,16 @@ function CallMediaPipeline() {
 }
 
 function getKurentoClient(ACallback) {
-  if (kurentoClient !== null) {
-    return ACallback(null, kurentoClient);
+  if (_kurentoClient !== null) {
+    return ACallback(null, _kurentoClient);
   }
-  kurento(kurento_uri, function (error, _kurentoClient) {
+  kurento(_kurentoUri, function (error, AKurentoClient) {
     if (error) {
-      var message = 'Coult not find media server at address ' + kurento_uri;
+      var message = 'Coult not find media server at address ' + _kurentoUri;
       return ACallback(message + ". Exiting with error " + error);
     }
-    kurentoClient = _kurentoClient;
-    ACallback(null, kurentoClient);
+    _kurentoClient = AKurentoClient;
+    ACallback(null, _kurentoClient);
   });
 }
 
@@ -58,45 +59,45 @@ function getIPAddress() {
 function replace_ip(sdp, ip) {
   if (!ip)
     ip = getIPAddress();
-  var temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+  let temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
   //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
   //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
   return temp;
 }
 
-CallMediaPipeline.prototype.createPipeline = function (callback) {
-  var self = this;
-  getKurentoClient(function (error, kurentoClient) {
-    if (error) {
-      return callback(error);
+CallMediaPipeline.prototype.createPipeline = function (ACallback) {
+  const self = this;
+  getKurentoClient(function (AError, AKurentoClient) {
+    if (AError) {
+      return ACallback(AError);
     }
-    kurentoClient.create('MediaPipeline', function (error, pipeline) {
-      if (error) {
-        return callback(error);
+    AKurentoClient.create('MediaPipeline', function (AError, APipeline) {
+      if (AError) {
+        return ACallback(AError);
       }
-      self.pipeline = pipeline;
-      pipeline.create('PlayerEndpoint', {
-        uri: playFileUri,
+      self.pipeline = APipeline;
+      APipeline.create('PlayerEndpoint', {
+        uri: _playFileUri,
         useEncodedMedia: false
       }, function (error, playerEndpoint) {
         if (error) {
-          return callback(error)
+          return ACallback(error)
         }
         self.pipeline.pe = playerEndpoint;
         playerEndpoint.on('EndOfStream', function () {
           console.log('*** END OF STREAM');
           self.pipeline.release();
-          ua.stop();
+          _ua.stop();
           process.exit(0);
         });
         console.log('PlayerEndpoint created');
         var recordParams = {
           stopOnEndOfStream: true,
           mediaProfile: 'WEBM_AUDIO_ONLY',
-          uri: recordFileUri
+          uri: _recordFileUri
         };
-        pipeline.create('RecorderEndpoint', recordParams, function (error, recorder) {
-          pipeline.create('RtpEndpoint', function (error, rtpe) {
+        APipeline.create('RecorderEndpoint', recordParams, function (error, recorder) {
+          APipeline.create('RtpEndpoint', function (error, rtpe) {
             self.pipeline.rtpe = rtpe;
             self.pipeline.rece = recorder;
             // connect to myRTPEndpoint (rx to us)
@@ -105,8 +106,8 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
             });
             rtpe.on('MediaStateChanged', function (event) {
               console.log('MediaStateChanged to ' + event.newState);
-              if (wait_for_call && (event.oldState !== event.newState && event.newState === "CONNECTED"))
-                start_media(pipeline);
+              if (_waitForCall && (event.oldState !== event.newState && event.newState === "CONNECTED"))
+                start_media(APipeline);
             });
             rtpe.on('ConnectionStateChanged', function (event) {
               console.log('ConnectionStateChanged to ' + event.newState);
@@ -118,7 +119,7 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
             rtpe.generateOffer(function (error, offer) {
               // this is offer for receiving side (recorder.sdp)
               // that we will send to asterisk as local offer
-              callback(null, offer);
+              ACallback(null, offer);
             }); // generateOffer
           }); // create('RtpEndpoint')
         }); // create('RecorderEndpoint')
@@ -126,19 +127,19 @@ CallMediaPipeline.prototype.createPipeline = function (callback) {
     }) // create('MediaPipeline')
   }); // getKurentoClient
 };// CallMediaPipeline.prototype.createPipeline
-
-var JsSIP = require('jssip');
+//***********************************************************************************************
+const JsSIP = require('jssip');
 const NodeWebSocket = require('jssip-node-websocket');
 // use local asterisk
-var asterisk_addr = kurento_addr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
-var asterisk_port = '5560';
-var socket = new NodeWebSocket('ws://' + asterisk_addr + ':5066');
+const asterisk_addr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
+const asterisk_port = '5560';
+const socket = new NodeWebSocket(`ws://${asterisk_addr}:5066`);
 var reg_sip_user = '1002';
 var reg_sip_user_pass = 'sippass-90210x1002';
 
 var configuration = {
-  'uri': 'sip:' + reg_sip_user + '@' + asterisk_addr + ':' + asterisk_port,
-  'password': reg_sip_user_pass,
+  uri: `sip:${reg_sip_user}@${asterisk_addr}:${asterisk_port}`,
+  password: reg_sip_user_pass,
   //display_name: reg_sip_user,
   authorization_user: reg_sip_user,
   sockets: [socket],
@@ -147,12 +148,14 @@ var configuration = {
 };
 
 try {
-  var ua_ = new JsSIP.UA(configuration);
-  ua = ua_;
+  const ua = new JsSIP.UA(configuration);
+  _ua = ua;
 } catch (e) {
   console.log(e);
   return;
 }
+
+//***********************************************************************************************
 
 function start_media(pipeline) {
   pipeline.pe.play(function (error) {
@@ -164,7 +167,7 @@ function start_media(pipeline) {
   pipeline.rece.record(() => console.log('Kurento is recording'));
 }
 
-var call_eventHandlers = {
+const call_eventHandlers = {
   'progress': function (data) {
     console.log('call in progress');
   },
@@ -173,22 +176,21 @@ var call_eventHandlers = {
     start_media(call_options.pipeline);
   }
 };
-
-var call_options = {
+const call_options = {
   'eventHandlers': call_eventHandlers,
   'extraHeaders': ['X-Foo: foo', 'X-Bar: bar'],
   'mediaConstraints': { 'audio': true, 'video': true },
 };
 
-ua.on('registered', function (e) {
+_ua.on('registered', function (e) {
   console.log('registered');
-  if (call_number) {
+  if (_callNumber) {
     // create new Kurento pipeline for call
     createPipeline(call_options).then(
         result => {
           console.log('outgoing call pipeline created');
           console.log('initiated call');
-          ua.call('sip:' + call_number + '@' + asterisk_addr + ':' + asterisk_port, call_options);
+          _ua.call(`sip:${_callNumber}@${asterisk_addr}:${asterisk_port}`, call_options);
         },
         reject => {
           console.log('Error creating pipeline');
@@ -198,32 +200,32 @@ ua.on('registered', function (e) {
     );
   }
 });
-ua.on('registrationFailed', function (err) {
+_ua.on('registrationFailed', function (err) {
   console.log('registrationFailed: ' + err.cause);
 });
-ua.on('connecting', function () {
+_ua.on('connecting', function () {
   console.log('connecting to SIP server');
 });
-ua.on('connected', function () {
+_ua.on('connected', function () {
   console.log('connected to SIP server');
 });
-ua.on('disconnected', function () {
+_ua.on('disconnected', function () {
   console.log('disconnected from SIP server');
 });
-ua.on('newMessage', function () {
+_ua.on('newMessage', function () {
   console.log('newMessage');
 });
 
-function createPipeline(call) {
-  return new Promise(function (resolve, reject) {
-    var pipeline = new CallMediaPipeline();
-    pipeline.createPipeline(function (error, kurento_offer) {
-      if (error) {
-        reject(error);
+function createPipeline(ACall) {
+  return new Promise(function (AResolve, AReject) {
+    const pipeline = new CallMediaPipeline();
+    pipeline.createPipeline(function (AError, AKurentoOffer) {
+      if (AError) {
+        AReject(AError);
       } else {
-        call.pipeline = pipeline.pipeline;
-        call.pipeline.kurento_offer = replace_ip(kurento_offer, kurento_addr);
-        resolve(kurento_offer);
+        ACall.pipeline = pipeline.pipeline;
+        ACall.pipeline.kurento_offer = replace_ip(AKurentoOffer, _kurentoAddr);
+        AResolve(AKurentoOffer);
       }
     });
   });
@@ -240,13 +242,14 @@ function send_answer_to_kurento(pipeline) {
   });
 }
 
-var outgoing = false;
+let outgoing = false;
 
-ua.on('newRTCSession', function (data) {
-  console.log('new ' + (data.originator === 'remote' ? 'incoming' : 'outgoing') + ' call');
-  var call = data.session;
-  if (data.originator === 'remote') { // incoming call
-    console.log('Call from: ' + call.request.headers.From[0].parsed.uri.toAor());
+_ua.on('newRTCSession', function (AData) {
+  //console.log('new ' + (data.originator === 'remote' ? 'incoming' : 'outgoing') + ' call');
+  console.log(`new ${AData.session.direction} call`);
+  const call = AData.session;
+  if (AData.originator === 'remote') { // incoming call
+    console.log(`Call from: ${call.request.headers.From[0].parsed.uri.toAor()}`);
     // create new Kurento pipeline for call
     createPipeline(call).then(
         result => {
@@ -261,7 +264,7 @@ ua.on('newRTCSession', function (data) {
         }
     );
   } else {
-    console.log('Call to: ' + call.request.headers.To[0]);
+    console.log(`Call to: ${call.request.headers.To[0]}`);
     call.pipeline = call_options.pipeline;
     call_options.call = call;
     outgoing = true;
@@ -271,7 +274,7 @@ ua.on('newRTCSession', function (data) {
       call.pipeline.release();
     console.log('Call ended: ' + data.cause);
     if (outgoing) {
-      ua.stop();
+      _ua.stop();
       process.exit(0);
     }
   });
@@ -281,7 +284,7 @@ ua.on('newRTCSession', function (data) {
       call.pipeline.release();
     console.log('Call ended: ' + data.cause);
     if (outgoing) {
-      ua.stop();
+      _ua.stop();
       process.exit(0);
     }
   });
@@ -313,7 +316,7 @@ ua.on('newRTCSession', function (data) {
             });
             call_options.pipeline.pe.connect(rtpe);
             rtpe.generateOffer(function (error, kurento_offer) {
-              call.pipeline.kurento_offer = replace_ip(kurento_offer, kurento_addr);
+              call.pipeline.kurento_offer = replace_ip(kurento_offer, _kurentoAddr);
               call.renegotiate();
             });
           });
@@ -340,4 +343,4 @@ ua.on('newRTCSession', function (data) {
   });
 });
 
-ua.start();
+_ua.start();
