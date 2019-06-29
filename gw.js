@@ -4,7 +4,7 @@
 
 var kurento = require('kurento-client');
 
-console.log(`Detected ${getIPAddress()} IP`);
+console.log(`Detected ${GetIpAddress()} IP`);
 
 //var kurento_addr = '165.22.143.0';
 const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
@@ -33,22 +33,22 @@ function getKurentoClient(ACallback) {
   }
   kurento(_kurentoUri, function (error, AKurentoClient) {
     if (error) {
-      var message = 'Coult not find media server at address ' + _kurentoUri;
-      return ACallback(message + ". Exiting with error " + error);
+      const message = `Could not find media server at address ${_kurentoUri}`;
+      return ACallback(`${message}. Exiting with error ${error}`);
     }
     _kurentoClient = AKurentoClient;
     ACallback(null, _kurentoClient);
   });
 }
 
-function getIPAddress() {
+function GetIpAddress() {
   //return '165.22.143.0';
-  var interfaces = require('os').networkInterfaces();
-  for (var devName in interfaces) {
-    var iface = interfaces[devName];
+  const interfaces = require('os').networkInterfaces();
+  for (let devName in interfaces) {
+    const iface = interfaces[devName];
 
-    for (var i = 0; i < iface.length; i++) {
-      var alias = iface[i];
+    for (let i = 0; i < iface.length; i++) {
+      const alias = iface[i];
       if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && alias.address !== '172.17.0.1' && !alias.internal)
         return alias.address;
     }
@@ -56,10 +56,10 @@ function getIPAddress() {
   return '0.0.0.0';
 }
 
-function replace_ip(sdp, ip) {
-  if (!ip)
-    ip = getIPAddress();
-  let temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
+function ReplaceIp(ASdp, AIP) {
+  if (!AIP)
+    AIP = GetIpAddress();
+  let temp = ASdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + AIP);
   //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
   //temp = sdp.replace(new RegExp("IN IP4 .*", "g"), "IN IP4 " + ip);
   return temp;
@@ -79,47 +79,47 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
       APipeline.create('PlayerEndpoint', {
         uri: _playFileUri,
         useEncodedMedia: false
-      }, function (error, playerEndpoint) {
-        if (error) {
-          return ACallback(error)
+      }, function (AError, APlayerEndpoint) {
+        if (AError) {
+          return ACallback(AError)
         }
-        self.pipeline.pe = playerEndpoint;
-        playerEndpoint.on('EndOfStream', function () {
+        self.pipeline.PlayerEndpoint = APlayerEndpoint;
+        APlayerEndpoint.on('EndOfStream', function () {
           console.log('*** END OF STREAM');
           self.pipeline.release();
           _ua.stop();
           process.exit(0);
         });
         console.log('PlayerEndpoint created');
-        var recordParams = {
+        const recordParams = {
           stopOnEndOfStream: true,
           mediaProfile: 'WEBM_AUDIO_ONLY',
           uri: _recordFileUri
         };
-        APipeline.create('RecorderEndpoint', recordParams, function (error, recorder) {
-          APipeline.create('RtpEndpoint', function (error, rtpe) {
-            self.pipeline.rtpe = rtpe;
-            self.pipeline.rece = recorder;
+        APipeline.create('RecorderEndpoint', recordParams, function (AError, ARecorderEndpoint) {
+          APipeline.create('RtpEndpoint', function (AError, ARtpEndpoint) {
+            self.pipeline.RtpEndpoint = ARtpEndpoint;
+            self.pipeline.RecorderEndpoint = ARecorderEndpoint;
             // connect to myRTPEndpoint (rx to us)
-            rtpe.connect(recorder, function (error) {
+            ARtpEndpoint.connect(ARecorderEndpoint, function (AError) {
               console.log('recorder endpoint connected');
             });
-            rtpe.on('MediaStateChanged', function (event) {
-              console.log('MediaStateChanged to ' + event.newState);
-              if (_waitForCall && (event.oldState !== event.newState && event.newState === "CONNECTED"))
-                start_media(APipeline);
+            ARtpEndpoint.on('MediaStateChanged', function (AEvent) {
+              console.log('MediaStateChanged to ' + AEvent.newState);
+              if (_waitForCall && (AEvent.oldState !== AEvent.newState && AEvent.newState === "CONNECTED"))
+                startMedia(APipeline);
             });
-            rtpe.on('ConnectionStateChanged', function (event) {
-              console.log('ConnectionStateChanged to ' + event.newState);
+            ARtpEndpoint.on('ConnectionStateChanged', function (AEvent) {
+              console.log('ConnectionStateChanged to ' + AEvent.newState);
             });
             // connect to myRTPEndpoint (tx from us)
-            playerEndpoint.connect(rtpe, function (error) {
+            APlayerEndpoint.connect(ARtpEndpoint, function (AError) {
               console.log('player endpoint connected');
             });
-            rtpe.generateOffer(function (error, offer) {
+            ARtpEndpoint.generateOffer(function (AError, AOffer) {
               // this is offer for receiving side (recorder.sdp)
               // that we will send to asterisk as local offer
-              ACallback(null, offer);
+              ACallback(null, AOffer);
             }); // generateOffer
           }); // create('RtpEndpoint')
         }); // create('RecorderEndpoint')
@@ -131,53 +131,53 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
 const JsSIP = require('jssip');
 const NodeWebSocket = require('jssip-node-websocket');
 // use local asterisk
-const asterisk_addr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
-const asterisk_port = '5560';
-const socket = new NodeWebSocket(`ws://${asterisk_addr}:5066`);
-var reg_sip_user = '1002';
-var reg_sip_user_pass = 'sippass-90210x1002';
+const _sipAddr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
+const _sipPort = '5560';
+const _sipWs = new NodeWebSocket(`ws://${_sipAddr}:5066`);
+const _regSipUser = '1002';
+const _regSipUserPass = 'sippass-90210x1002';
 
-var configuration = {
-  uri: `sip:${reg_sip_user}@${asterisk_addr}:${asterisk_port}`,
-  password: reg_sip_user_pass,
+const configuration = {
+  uri: `sip:${_regSipUser}@${_sipAddr}:${_sipPort}`,
+  password: _regSipUserPass,
   //display_name: reg_sip_user,
-  authorization_user: reg_sip_user,
-  sockets: [socket],
-  realm: asterisk_addr,
+  authorization_user: _regSipUser,
+  sockets: [_sipWs],
+  realm: _sipAddr,
   stun_servers: 'sipwebrtc2.ddns.net'
 };
 
 try {
   const ua = new JsSIP.UA(configuration);
   _ua = ua;
-} catch (e) {
-  console.log(e);
+} catch (AError) {
+  console.log(AError);
   return;
 }
 
 //***********************************************************************************************
 
-function start_media(pipeline) {
-  pipeline.pe.play(function (error) {
-    if (error) {
+function startMedia(APipeline) {
+  APipeline.PlayerEndpoint.play(function (AError) {
+    if (AError) {
       reject('play error');
     }
     console.log('Kurento is playing');
   });
-  pipeline.rece.record(() => console.log('Kurento is recording'));
+  APipeline.RecorderEndpoint.record(() => console.log('Kurento is recording'));
 }
 
-const call_eventHandlers = {
+const callEventHandlers = {
   'progress': function (data) {
     console.log('call in progress');
   },
   'confirmed': function (data) {
     console.log('call confirmed');
-    start_media(call_options.pipeline);
+    startMedia(callOptions.pipeline);
   }
 };
-const call_options = {
-  'eventHandlers': call_eventHandlers,
+const callOptions = {
+  'eventHandlers': callEventHandlers,
   'extraHeaders': ['X-Foo: foo', 'X-Bar: bar'],
   'mediaConstraints': { 'audio': true, 'video': true },
 };
@@ -186,11 +186,11 @@ _ua.on('registered', function (e) {
   console.log('registered');
   if (_callNumber) {
     // create new Kurento pipeline for call
-    createPipeline(call_options).then(
+    createPipeline(callOptions).then(
         result => {
           console.log('outgoing call pipeline created');
           console.log('initiated call');
-          _ua.call(`sip:${_callNumber}@${asterisk_addr}:${asterisk_port}`, call_options);
+          _ua.call(`sip:${_callNumber}@${_sipAddr}:${_sipPort}`, callOptions);
         },
         reject => {
           console.log('Error creating pipeline');
@@ -224,20 +224,20 @@ function createPipeline(ACall) {
         AReject(AError);
       } else {
         ACall.pipeline = pipeline.pipeline;
-        ACall.pipeline.kurento_offer = replace_ip(AKurentoOffer, _kurentoAddr);
+        ACall.pipeline.kurento_offer = ReplaceIp(AKurentoOffer, _kurentoAddr);
         AResolve(AKurentoOffer);
       }
     });
   });
 }
 
-function send_answer_to_kurento(pipeline) {
-  return new Promise(function (resolve, reject) {
-    pipeline.rtpe.processAnswer(pipeline.sip_offer, function (error, sdpAnswer) {
-      if (error) {
-        reject('Kurento processAnswer error:' + error);
+function SendAnswerToKurento(APipeline) {
+  return new Promise(function (AResolve, AReject) {
+    APipeline.RtpEndpoint.processAnswer(APipeline.sip_offer, function (AError, ASdpAnswer) {
+      if (AError) {
+        AReject(`Kurento processAnswer error:' ${AError}`);
       }
-      resolve();
+      AResolve();
     }); // processAnswer
   });
 }
@@ -265,8 +265,8 @@ _ua.on('newRTCSession', function (AData) {
     );
   } else {
     console.log(`Call to: ${call.request.headers.To[0]}`);
-    call.pipeline = call_options.pipeline;
-    call_options.call = call;
+    call.pipeline = callOptions.pipeline;
+    callOptions.call = call;
     outgoing = true;
   }
   call.on('ended', function (data) {
@@ -294,29 +294,29 @@ _ua.on('newRTCSession', function (AData) {
   call.on('update', function (data) {
     console.log('Got SIP UPDATE');
   });
-  call.on('sdp', function (data) {
-    if (data.originator === 'remote') {
+  call.on('sdp', function (AData) {
+    if (AData.originator === 'remote') {
       if (call.pipeline.sip_offer) {
         call.pipeline.sip_offer = null;
         console.log('Renegotiate requested');
         // recreate the RTPEndpoint, attach recorder to it and start media again
-        call_options.pipeline.rece.stop();
-        call_options.pipeline.pe.stop();
-        call_options.pipeline.rtpe.release();
-        call_options.pipeline.create('RtpEndpoint', function (error, rtpe) {
-          call_options.pipeline.rtpe = rtpe;
-          rtpe.connect(call_options.pipeline.rece, function (error) {
-            rtpe.on('MediaStateChanged', function (event) {
+        callOptions.pipeline.RecorderEndpoint.stop();
+        callOptions.pipeline.PlayerEndpoint.stop();
+        callOptions.pipeline.RtpEndpoint.release();
+        callOptions.pipeline.create('RtpEndpoint', function (error, ARtpEndpoint) {
+          callOptions.pipeline.RtpEndpoint = ARtpEndpoint;
+          ARtpEndpoint.connect(callOptions.pipeline.RecorderEndpoint, function (error) {
+            ARtpEndpoint.on('MediaStateChanged', function (event) {
               console.log('reINVITE: MediaStateChanged to ' + event.newState);
               if (event.oldState !== event.newState && event.newState === "CONNECTED")
-                start_media(call.pipeline);
+                startMedia(call.pipeline);
             });
-            rtpe.on('ConnectionStateChanged', function (event) {
+            ARtpEndpoint.on('ConnectionStateChanged', function (event) {
               console.log('reINVITE: ConnectionStateChanged to ' + event.newState);
             });
-            call_options.pipeline.pe.connect(rtpe);
-            rtpe.generateOffer(function (error, kurento_offer) {
-              call.pipeline.kurento_offer = replace_ip(kurento_offer, _kurentoAddr);
+            callOptions.pipeline.PlayerEndpoint.connect(ARtpEndpoint);
+            ARtpEndpoint.generateOffer(function (error, kurento_offer) {
+              call.pipeline.kurento_offer = ReplaceIp(kurento_offer, _kurentoAddr);
               call.renegotiate();
             });
           });
@@ -324,8 +324,8 @@ _ua.on('newRTCSession', function (AData) {
         return;
       }
 //      console.log('first remote sdp: ' + data.sdp);
-      call.pipeline.sip_offer = data.sdp;
-      send_answer_to_kurento(call.pipeline).then(
+      call.pipeline.sip_offer = AData.sdp;
+      SendAnswerToKurento(call.pipeline).then(
           result => {
             console.log('Answer to Kurento sent');
           },
@@ -336,8 +336,8 @@ _ua.on('newRTCSession', function (AData) {
           }
       );
     }
-    if (data.originator === 'local') {
-      data.sdp = call.pipeline.kurento_offer;
+    if (AData.originator === 'local') {
+      AData.sdp = call.pipeline.kurento_offer;
       // console.log('local sdp: ' + data.sdp);
     }
   });
