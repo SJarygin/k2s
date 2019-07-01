@@ -6,20 +6,23 @@ var kurento = require('kurento-client');
 
 console.log(`Detected ${GetIpAddress()} IP`);
 
-//var kurento_addr = '165.22.143.0';
 const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
-const _kurentoUri = `ws://${_kurentoAddr}:8888/kurento`;
-const _playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
+//const _kurentoAddr = '165.22.143.0';//'127.0.0.1';
+//const _kurentoUri = `wss://fe80::5405:8bff:fef4:3c28/64:8433/kurento`;
+//const _playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
+const _playFileUri = "rtsp://freja.hiof.no:1935/rtplive/_definst_/hessdalen03.stream";
 //var playFileUri = "file:///video/demo.webm";
 const _recordFileUri = "file:///video/record.webm";
-const _callNumber = require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
+
+const _secure = require('minimist')(process.argv.slice(2))['sec'];
 const _waitForCall = require('minimist')(process.argv.slice(2))['wait'];
+const _callNumber = _waitForCall ? undefined : require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
 
 let _kurentoClient = null;
 let _ua;
 
 if (!_callNumber && !_waitForCall) {
-  console.log('Usage: nodejs gw.js [--call phone_number] [--wait]');
+  console.log('Usage: nodejs gw.js [--sec] [--call phone_number] [--wait]');
   process.exit(0);
 }
 
@@ -132,19 +135,28 @@ const JsSIP = require('jssip');
 const NodeWebSocket = require('jssip-node-websocket');
 // use local asterisk
 const _sipAddr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
-const _sipPort = '5560';
-const _sipWs = new NodeWebSocket(`ws://${_sipAddr}:5066`);
-const _regSipUser = '1002';
-const _regSipUserPass = 'sippass-90210x1002';
+const _sipPort = _secure ? '5561' : '5560';
+const _sipWsStr = _secure ? `wss://${_sipAddr}:7443` : `ws://${_sipAddr}:5066`;
+const _kurentoUri = _secure ? `wss://${_kurentoAddr}:8433/kurento` : `ws://${_kurentoAddr}:8888/kurento`;
+
+const _sipWs = new NodeWebSocket(_sipWsStr);
+const _regSipUser = '1008';
+const _regSipUserPass = `sippass-90210x${_regSipUser}`;
+
+const _uri = `sip:${_regSipUser}@${_sipAddr}:${_sipPort};transport=tls`;
+console.log(`uri    : ${_uri}`);
+console.log(`socket : ${_sipWsStr}`);
 
 const configuration = {
-  uri: `sip:${_regSipUser}@${_sipAddr}:${_sipPort}`,
+  uri: _uri,
   password: _regSipUserPass,
   //display_name: reg_sip_user,
   authorization_user: _regSipUser,
   sockets: [_sipWs],
+  //ws_servers: _sipWsStr,
   realm: _sipAddr,
-  stun_servers: 'sipwebrtc2.ddns.net'
+  stun_servers: 'sipwebrtc2.ddns.net',
+  //trace_sip: true
 };
 
 try {
@@ -180,6 +192,10 @@ const callOptions = {
   'eventHandlers': callEventHandlers,
   'extraHeaders': ['X-Foo: foo', 'X-Bar: bar'],
   'mediaConstraints': { 'audio': true, 'video': true },
+  mandatory: [{
+    OfferToReceiveAudio: true,
+    OfferToReceiveVideo: true
+  },{'DtlsSrtpKeyAgreement': true} ]
 };
 
 _ua.on('registered', function (e) {
@@ -209,8 +225,11 @@ _ua.on('connecting', function () {
 _ua.on('connected', function () {
   console.log('connected to SIP server');
 });
-_ua.on('disconnected', function () {
-  console.log('disconnected from SIP server');
+_ua.on('failed', function (e) {
+  console.log('failed: ' + e);
+});
+_ua.on('disconnected', function (e) {
+  console.log('disconnected from SIP server: ' + e.reason);
 });
 _ua.on('newMessage', function () {
   console.log('newMessage');
@@ -225,6 +244,7 @@ function createPipeline(ACall) {
       } else {
         ACall.pipeline = pipeline.pipeline;
         ACall.pipeline.kurento_offer = ReplaceIp(AKurentoOffer, _kurentoAddr);
+        //ACall.pipeline.kurento_offer = AKurentoOffer.replace('a=setup:actpass', 'a=setup:passive');
         AResolve(AKurentoOffer);
       }
     });
@@ -237,7 +257,7 @@ function SendAnswerToKurento(APipeline) {
       if (AError) {
         AReject(`Kurento processAnswer error:' ${AError}`);
       }
-      AResolve();
+      AResolve(ASdpAnswer);
     }); // processAnswer
   });
 }
@@ -343,4 +363,9 @@ _ua.on('newRTCSession', function (AData) {
   });
 });
 
-_ua.start();
+try {
+  _ua.start();
+} catch (AError) {
+  console.log(AError);
+  return;
+}
