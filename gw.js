@@ -62,7 +62,7 @@ if (!_callNumber && !_waitForCall) {
 }
 
 if (_confCall) {
-  _callNumber = `${_confCall}000`;
+  _callNumber = `${_callNumber}000`;
 }
 
 //process.exit(0);
