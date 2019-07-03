@@ -21,7 +21,8 @@ const _recordFileUri = "file:///video/record.webm";
 
 const _secure = _minimist(process.argv.slice(2))['sec'];
 const _waitForCall = _minimist(process.argv.slice(2))['wait'];
-const _callNumber = _waitForCall ? undefined : _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
+const _confCall = _minimist(process.argv.slice(2))['conf'];
+let _callNumber = _waitForCall ? undefined : _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
 
 // use local asterisk
 const _sipAddr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
@@ -58,6 +59,10 @@ if (!_callNumber && !_waitForCall) {
     console.log(`[${cmdLine}]`);
     _childProcess.execSync(cmdLine);
   });
+}
+
+if (_confCall) {
+  _callNumber = `${_confCall}000`;
 }
 
 //process.exit(0);
