@@ -51,7 +51,7 @@ if (!_callNumber && !_waitForCall) {
   console.log('stdout: ' + stdout);
   const stdoutSplitted = stdout.split("\n");
   selfUserLines = stdoutSplitted.filter(AItem => AItem.includes(`/${_regSipUser}@${_kurentoAddr}`));
-  console.log(selfUserLines);
+  console.log(`selfUserLines=${selfUserLines}`);
   selfUserLines.forEach(AItem => {
     const itemSpitted = AItem.split(";");
     const cmdLine = `fs_cli -rRS -x "conference ${_callNumber}-${GetIpAddress()} kick ${itemSpitted[0]}"`;
