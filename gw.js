@@ -3,6 +3,7 @@
 // process.env.DEBUG = 'rtcninja*';
 
 var kurento = require('kurento-client');
+const child_process = require('child_process');
 
 console.log(`Detected ${GetIpAddress()} IP`);
 
@@ -10,7 +11,8 @@ const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
 //const _kurentoAddr = '165.22.143.0';//'127.0.0.1';
 //const _kurentoUri = `wss://fe80::5405:8bff:fef4:3c28/64:8433/kurento`;
 //const _playFileUri = "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov";
-const _playFileUri = "rtsp://freja.hiof.no:1935/rtplive/_definst_/hessdalen03.stream";
+//const _playFileUri = "rtsp://freja.hiof.no:1935/rtplive/_definst_/hessdalen03.stream";
+const _playFileUri = "https://cameras.inetcom.ru/hls/camera12_2.m3u8";
 //var playFileUri = "file:///video/demo.webm";
 const _recordFileUri = "file:///video/record.webm";
 
@@ -25,6 +27,24 @@ if (!_callNumber && !_waitForCall) {
   console.log('Usage: nodejs gw.js [--sec] [--call phone_number] [--wait]');
   process.exit(0);
 }
+
+const workerProcess = child_process.exec('fs_cli -rRS -x "conference list"',function
+    (error, stdout, stderr) {
+
+  if (error) {
+    console.log(error.stack);
+    console.log('Error code: '+error.code);
+    console.log('Signal received: '+error.signal);
+    process.exit(0);
+  }
+  console.log('stdout: ' + stdout);
+  console.log('stderr: ' + stderr);
+});
+
+workerProcess.on('exit', function (code) {
+  console.log('Child process exited with exit code '+code);
+});
+
 
 function CallMediaPipeline() {
   this.pipeline = null;
