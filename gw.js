@@ -2,8 +2,11 @@
 
 // process.env.DEBUG = 'rtcninja*';
 
-var kurento = require('kurento-client');
-const child_process = require('child_process');
+const _kurento = require('kurento-client');
+const _childProcess = require('child_process');
+const _jsSIP = require('jssip');
+const _nodeWebSocket = require('jssip-node-websocket');
+const _minimist = require('minimist');
 
 console.log(`Detected ${GetIpAddress()} IP`);
 
@@ -16,9 +19,17 @@ const _playFileUri = "https://cameras.inetcom.ru/hls/camera12_2.m3u8";
 //var playFileUri = "file:///video/demo.webm";
 const _recordFileUri = "file:///video/record.webm";
 
-const _secure = require('minimist')(process.argv.slice(2))['sec'];
-const _waitForCall = require('minimist')(process.argv.slice(2))['wait'];
-const _callNumber = _waitForCall ? undefined : require('minimist')(process.argv.slice(2), opts = { string: 'call' })['call'];
+const _secure = _minimist(process.argv.slice(2))['sec'];
+const _waitForCall = _minimist(process.argv.slice(2))['wait'];
+const _callNumber = _waitForCall ? undefined : _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
+
+// use local asterisk
+const _sipAddr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
+const _sipPort = _secure ? '5561' : '5560';
+const _sipWsStr = _secure ? `wss://${_sipAddr}:7443` : `ws://${_sipAddr}:5066`;
+const _kurentoUri = _secure ? `wss://${_kurentoAddr}:8433/kurento` : `ws://${_kurentoAddr}:8888/kurento`;
+const _regSipUser = '1008';
+const _regSipUserPass = `sippass-90210x${_regSipUser}`;
 
 let _kurentoClient = null;
 let _ua;
@@ -27,24 +38,29 @@ if (!_callNumber && !_waitForCall) {
   console.log('Usage: nodejs gw.js [--sec] [--call phone_number] [--wait]');
   process.exit(0);
 }
+/*
+    stdout = "+OK Conference 3500-165.22.143.0 (3 members rate: 48000 flags: running|answered|enforce_min|dynamic|exit_sound|enter_sound|video_floor_only|video_rfc4579|livearray_sync|video_floor_lock|transcode_video|video_muxing|minimize_video_encoding|json_status)\n" +
+        "391;sofia/internal/1008@sipwebrtc2.ddns.net:5560;8b3dca93-54c5-4536-b143-467dd6b01775;1008;1008;hear|speak|video|vid-floor;0;0;200\n" +
+        "390;sofia/internal/1004@sipwebrtc2.ddns.net:5560;9988a1ad-6854-42c2-9901-bd3642c9dd3d;1008;1008;hear|speak|video;0;0;200\n" +
+        "389;sofia/internal/1008@sipwebrtc2.ddns.net:5560;d7dec80a-afa5-449f-95a8-9a8cf8d1c546;1008;1008;hear|speak|video|floor;0;0;200";
 
-const workerProcess = child_process.exec('fs_cli -rRS -x "conference list"',function
-    (error, stdout, stderr) {
-
-  if (error) {
-    console.log(error.stack);
-    console.log('Error code: '+error.code);
-    console.log('Signal received: '+error.signal);
-    process.exit(0);
-  }
+*/
+//if(!_waitForCall)
+{
+  const stdout = _childProcess.execSync('fs_cli -rRS -x "conference list"').toString();
   console.log('stdout: ' + stdout);
-  console.log('stderr: ' + stderr);
-});
+  const stdoutSplitted = stdout.split("\n");
+  selfUserLines = stdoutSplitted.filter(AItem => AItem.includes(`/${_regSipUser}@${_kurentoAddr}`));
+  console.log(selfUserLines);
+  selfUserLines.forEach(AItem => {
+    const itemSpitted = AItem.split(";");
+    const cmdLine = `fs_cli -rRS -x "conference ${_callNumber}-${GetIpAddress()} kick ${itemSpitted[0]}"`;
+    console.log(`[${cmdLine}]`);
+    _childProcess.execSync(cmdLine);
+  });
+}
 
-workerProcess.on('exit', function (code) {
-  console.log('Child process exited with exit code '+code);
-});
-
+//process.exit(0);
 
 function CallMediaPipeline() {
   this.pipeline = null;
@@ -54,7 +70,7 @@ function getKurentoClient(ACallback) {
   if (_kurentoClient !== null) {
     return ACallback(null, _kurentoClient);
   }
-  kurento(_kurentoUri, function (error, AKurentoClient) {
+  _kurento(_kurentoUri, function (error, AKurentoClient) {
     if (error) {
       const message = `Could not find media server at address ${_kurentoUri}`;
       return ACallback(`${message}. Exiting with error ${error}`);
@@ -151,17 +167,8 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
   }); // getKurentoClient
 };// CallMediaPipeline.prototype.createPipeline
 //***********************************************************************************************
-const JsSIP = require('jssip');
-const NodeWebSocket = require('jssip-node-websocket');
-// use local asterisk
-const _sipAddr = _kurentoAddr;//'sipwebrtc2.ddns.net';//'127.0.0.1';
-const _sipPort = _secure ? '5561' : '5560';
-const _sipWsStr = _secure ? `wss://${_sipAddr}:7443` : `ws://${_sipAddr}:5066`;
-const _kurentoUri = _secure ? `wss://${_kurentoAddr}:8433/kurento` : `ws://${_kurentoAddr}:8888/kurento`;
 
-const _sipWs = new NodeWebSocket(_sipWsStr);
-const _regSipUser = '1008';
-const _regSipUserPass = `sippass-90210x${_regSipUser}`;
+const _sipWs = new _nodeWebSocket(_sipWsStr);
 
 const _uri = `sip:${_regSipUser}@${_sipAddr}:${_sipPort};transport=tls`;
 console.log(`uri    : ${_uri}`);
@@ -180,7 +187,7 @@ const configuration = {
 };
 
 try {
-  const ua = new JsSIP.UA(configuration);
+  const ua = new _jsSIP.UA(configuration);
   _ua = ua;
 } catch (AError) {
   console.log(AError);
@@ -215,7 +222,7 @@ const callOptions = {
   mandatory: [{
     OfferToReceiveAudio: true,
     OfferToReceiveVideo: true
-  },{'DtlsSrtpKeyAgreement': true} ]
+  }, { 'DtlsSrtpKeyAgreement': true }]
 };
 
 _ua.on('registered', function (e) {
