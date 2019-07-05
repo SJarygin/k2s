@@ -145,14 +145,14 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
           mediaProfile: 'WEBM_AUDIO_ONLY',
           uri: _recordFileUri
         };
-        APipeline.create('RecorderEndpoint', recordParams, function (AError, ARecorderEndpoint) {
+        //APipeline.create('RecorderEndpoint', recordParams, function (AError, ARecorderEndpoint) {
           APipeline.create('RtpEndpoint', function (AError, ARtpEndpoint) {
             self.pipeline.RtpEndpoint = ARtpEndpoint;
-            self.pipeline.RecorderEndpoint = ARecorderEndpoint;
+            //self.pipeline.RecorderEndpoint = ARecorderEndpoint;
             // connect to myRTPEndpoint (rx to us)
-            ARtpEndpoint.connect(ARecorderEndpoint, function (AError) {
-              console.log('recorder endpoint connected');
-            });
+            // ARtpEndpoint.connect(ARecorderEndpoint, function (AError) {
+            //   console.log('recorder endpoint connected');
+            // });
             ARtpEndpoint.on('MediaStateChanged', function (AEvent) {
               console.log('MediaStateChanged to ' + AEvent.newState);
               if (_waitForCall && (AEvent.oldState !== AEvent.newState && AEvent.newState === "CONNECTED"))
@@ -171,7 +171,7 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
               ACallback(null, AOffer);
             }); // generateOffer
           }); // create('RtpEndpoint')
-        }); // create('RecorderEndpoint')
+        //}); // create('RecorderEndpoint')
       }); // create('PlayerEndpoint')
     }) // create('MediaPipeline')
   }); // getKurentoClient
@@ -213,7 +213,7 @@ function startMedia(APipeline) {
     }
     console.log('Kurento is playing');
   });
-  APipeline.RecorderEndpoint.record(() => console.log('Kurento is recording'));
+//  APipeline.RecorderEndpoint.record(() => console.log('Kurento is recording'));
 }
 
 const callEventHandlers = {
