@@ -22,6 +22,7 @@ const _recordFileUri = "file:///video/record.webm";
 const _secure = _minimist(process.argv.slice(2))['sec'];
 const _waitForCall = _minimist(process.argv.slice(2))['wait'];
 const _confCall = _minimist(process.argv.slice(2))['conf'];
+const _debug = _minimist(process.argv.slice(2))['debug'];
 let _callNumber = _waitForCall ? undefined : _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
 
 // use local asterisk
@@ -46,24 +47,28 @@ if (!_callNumber && !_waitForCall) {
         "389;sofia/internal/1008@sipwebrtc2.ddns.net:5560;d7dec80a-afa5-449f-95a8-9a8cf8d1c546;1008;1008;hear|speak|video|floor;0;0;200";
 
 */
+
+const _fsExecName = _debug ? "./fs_cli" : "fs_cli";
+
 //if(!_waitForCall)
 {
-  const stdout = _childProcess.execSync('fs_cli -rRS -x "conference list"').toString();
+  const stdout = _childProcess.execSync(`${_fsExecName} -rRS -x "conference list"`).toString();
   console.log('stdout: ' + stdout);
   const stdoutSplitted = stdout.split("\n");
   selfUserLines = stdoutSplitted.filter(AItem => AItem.includes(`/${_regSipUser}@${_kurentoAddr}`));
   console.log(`selfUserLines=${selfUserLines}`);
   selfUserLines.forEach(AItem => {
     const itemSpitted = AItem.split(";");
-    const cmdLine = `fs_cli -rRS -x "conference ${_callNumber}-${GetIpAddress()} kick ${itemSpitted[0]}"`;
+    const cmdLine = `${_fsExecName} -rRS -x "conference ${_callNumber}-${GetIpAddress()} kick ${itemSpitted[0]}"`;
     console.log(`[${cmdLine}]`);
     _childProcess.execSync(cmdLine);
   });
 }
 
-if (_confCall) {
+if (_callNumber && _confCall) {
   _callNumber = `${_callNumber}000`;
 }
+
 
 //process.exit(0);
 
