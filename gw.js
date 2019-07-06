@@ -5,6 +5,8 @@ const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
 const session = require("express-session");
+const FileStore = require('session-file-store')(session);
+
 
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
