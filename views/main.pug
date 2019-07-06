@@ -1,0 +1,21 @@
+extends layout
+
+block content
+    h1= title
+    p Welcome to #{title}
+
+    div
+        p SIP:
+        div
+            p Number: #{callNumber}
+            p URI: #{sipUri}
+            p WS: #{sipWsUri}
+            p stun: #{stunUri}
+    form(method="post", action="/api")
+        div
+            p Stream URI:
+            input.uri(type="text", name="uri", required="true", placeholder="URI", value="https://cameras.inetcom.ru/hls/camera12_2.m3u8")
+            br
+            button.btn_start(type="submit", formaction="api/start") Start media streaming
+
+            button.btn_stop(type="submit", formaction="api/stop") Stop media streaming

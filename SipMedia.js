@@ -23,14 +23,14 @@ class SipMedia {
     const kurentoAddr = this.options.Kurento.Addr;
     const kurentoPort = this.options.Kurento.WsPort;
     const kurentoPath = this.options.Kurento.Path === undefined ? 'kurento' : this.options.Kurento.Path;
-    this.kurentoUri = `${kurentoTransport}://${kurentoAddr}:${kurentoPort}/${kurentoPath}`;
-    console.log(`kurentoUri: ${this.kurentoUri}`);
+    this.KurentoUri = `${kurentoTransport}://${kurentoAddr}:${kurentoPort}/${kurentoPath}`;
+    console.log(`kurentoUri: ${this.KurentoUri}`);
 
     const sipWsTransport = this.options.Secure ? 'wss' : 'ws';
     const sipWsAddr = this.options.Sip.Addr;
     const sipWsPort = this.options.Sip.WsPort;
-    const sipWsUri = `${sipWsTransport}://${sipWsAddr}:${sipWsPort}`;
-    console.log(`sipWsUri: ${sipWsUri}`);
+    this.SipWsUri = `${sipWsTransport}://${sipWsAddr}:${sipWsPort}`;
+    console.log(`sipWsUri: ${this.SipWsUri}`);
 
     const sipUriUser = this.options.Sip.User.Name;
     const sipUriTransport = this.options.Secure ? 'tls' : 'tcp';
@@ -38,9 +38,12 @@ class SipMedia {
     const sipUriPort = this.options.Sip.Port;
     const sipUri = `sip:${sipUriUser}@${sipUriAddr}:${sipUriPort};transport=${sipUriTransport}`;
     console.log(`sipUri : ${sipUri}`);
-    this.sipUriForCall = `${sipUriAddr}:${sipUriPort};transport=${sipUriTransport}`;
+    this.SipUriForCall = `${sipUriAddr}:${sipUriPort};transport=${sipUriTransport}`;
 
-    const sipWs = new _nodeWebSocket(sipWsUri);
+    this.StunUri = this.options.Sip.StunUri;
+    console.log(`StunUri : ${this.StunUri}`);
+
+    const sipWs = new _nodeWebSocket(this.SipWsUri);
 
     const configuration = {
       uri: sipUri,
@@ -140,7 +143,7 @@ class SipMedia {
           call.pipeline.release();
         console.log('Call ended: ' + AData.cause);
         //if (outgoing) {
-          this.ua.stop();
+        this.ua.stop();
         //   process.exit(0);
         // }
       });
@@ -150,7 +153,7 @@ class SipMedia {
           call.pipeline.release();
         console.log('Call ended: ' + AData.cause);
         //if (outgoing) {
-          this.ua.stop();
+        this.ua.stop();
         //   process.exit(0);
         // }
       });
@@ -231,7 +234,7 @@ class SipMedia {
         result => {
           console.log('outgoing call pipeline created');
           console.log('initiated call');
-          this.ua.call(`sip:${callNumber}@${this.sipUriForCall}`, this.callOptions);
+          this.ua.call(`sip:${callNumber}@${this.SipUriForCall}`, this.callOptions);
         },
         reject => {
           console.log('Error creating pipeline');
@@ -267,10 +270,10 @@ class SipMedia {
     if (this.kurentoClient !== null) {
       return ACallback(null, this.kurentoClient);
     }
-    console.log(`Get kurento client: ${this.kurentoUri}`);
-    _kurento(this.kurentoUri, function (AError, AKurentoClient) {
+    console.log(`Get kurento client: ${this.KurentoUri}`);
+    _kurento(this.KurentoUri, function (AError, AKurentoClient) {
       if (AError) {
-        return ACallback(`Could not find media server at address ${self.kurentoUri}. Exiting with error ${AError}`);
+        return ACallback(`Could not find media server at address ${self.KurentoUri}. Exiting with error ${AError}`);
       }
       self.kurentoClient = AKurentoClient;
       ACallback(null, self.kurentoClient);

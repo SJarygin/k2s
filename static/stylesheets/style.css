@@ -1,0 +1,34 @@
+body {
+    padding: 50px;
+    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+    background-color: #6b6d7b;
+}
+
+a {
+    color: #00B7FF;
+}
+
+div {
+    width: 90%;
+}
+
+form div {
+    width: 90%;
+
+}
+
+input {
+    width: 80%;
+    /*margin-top: 10px;*/
+    margin-left: 10px;
+}
+
+.btn_start {
+    margin-left: 10px;
+    alignment: left;
+}
+
+.btn_stop {
+    margin-left: 100px;
+
+}

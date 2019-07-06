@@ -1,27 +1,172 @@
-// Quick & dirty Kurento to SIP gateway
-
+'use strict';
 // process.env.DEBUG = 'rtcninja*';
 
-// const _kurento = require('kurento-client');
-// const _childProcess = require('child_process');
-// const _jsSIP = require('jssip');
-// const _nodeWebSocket = require('jssip-node-websocket');
-const _minimist = require('minimist');
-const _sipMedia = require('./SipMedia.js');
+const express = require('express');
+const path = require('path');
+const favicon = require('serve-favicon');
+const session = require("express-session");
+
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
+const pug = require('pug');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+
+const sipMediaModule = require('./SipMedia.js');
 //const _fs = require('mz/fs');
-const _nconf = require('nconf');
+const minimist = require('minimist');
+const nconf = require('nconf');
 
 const hostName = 'sipwebrtc2.ddns.net';
 const playFileUri = "https://cameras.inetcom.ru/hls/camera12_2.m3u8";
 
-const callNumber = _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
-const config = _minimist(process.argv.slice(2))['config'];
-const debug = _minimist(process.argv.slice(2))['debug'];
+const callNumber = minimist(process.argv.slice(2), { string: 'call' })['call'];
+const config = minimist(process.argv.slice(2))['config'];
+const debug = minimist(process.argv.slice(2))['debug'];
+const pswd = minimist(process.argv.slice(2))['pswd'];
 
-_nconf.file({ file: config });
+const sipMediaConfig = nconf.get('config');
 
-const sipMediaConfig = _nconf.get('config');
+sipMediaConfig.Debug = debug;
 
+const sipMedia = new sipMediaModule.SipMedia(sipMediaConfig, () => {
+//  if (sipMediaConfig.Debug)
+//    sipMedia.Start(callNumber, playFileUri)
+});
+
+const app = express();
+app.set('trust proxy', true);
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'static')));
+
+app.use(session({
+  secret: 'SipWebRtc-2019',
+  resave: false,
+  saveUninitialized: false,
+  store: new FileStore
+}));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.post('/login',
+    passport.authenticate('local', {
+      successRedirect: '/main',
+      failureRedirect: '/',
+      failureFlash: false
+    })
+);
+
+app.use('/', indexRouter);
+app.use('/*', function (req, res, next) {
+  if (req.isAuthenticated()) {
+    return next()
+  }
+  res.redirect('/')
+});
+
+app.post('/api/start', function (req, res, next) {
+  sipMedia.Start(callNumber, req.body.uri);
+});
+
+app.post('/api/stop', function (req, res, next) {
+  sipMedia.Stop();
+});
+
+app.use('/main', function (req, res, next) {
+  res.render('main', {
+    title: 'SipMedia',
+    sipUri: sipMedia.SipUriForCall,
+    sipWsUri: sipMedia.SipWsUri,
+    stunUri: sipMedia.StunUri,
+    callNumber: callNumber
+  });
+});
+
+const user = {
+  username: 'x1',
+  password: pswd,
+  id: 1
+};
+
+function findUser(username, callback) {
+  if (username === user.username) {
+    return callback(null, user)
+  }
+  return callback(null)
+}
+
+passport.use(new LocalStrategy(
+    function (username, password, done) {
+      findUser(username, function (err, user) {
+        if (err) {
+          return done(err)
+        }
+        if (!user) {
+          return done(null, false)
+        }
+        if (password !== user.password) {
+          return done(null, false)
+        }
+        return done(null, user)
+      })
+    }
+));
+
+passport.serializeUser(function (user, done) {
+  done(null, user.username);
+});
+
+passport.deserializeUser(function (username, done) {
+  findUser(username, function (err, user) {
+    done(err, user);
+  });
+});
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {                    // [1]
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+// error handlers
+
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+  app.use(function (err, req, res, next) {             // [2]
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: err
+    });
+  });
+}
+
+// production error handler
+// no stacktraces leaked to user
+app.use(function (err, req, res, next) {                // [3]
+  res.status(err.status || 500);
+  res.render('error', {
+    message: err.message,
+    error: {}
+  });
+});
+
+module.exports = app;
+
+/*
 // const sipMediaConfig = {
 //   Secure: 0,
 //   Kurento: {
@@ -41,13 +186,6 @@ const sipMediaConfig = _nconf.get('config');
 // };
 //_fs.writeFileSync('./simple.json', JSON.stringify(sipMediaConfig,null,'\t'), 'utf8');
 
-sipMediaConfig.Debug = debug;
-
-const sipMedia = new _sipMedia.SipMedia(sipMediaConfig, () => {
-  sipMedia.Start(callNumber, playFileUri)
-});
-
-/*
 console.log(`Detected ${GetIpAddress()} IP`);
 
 const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
