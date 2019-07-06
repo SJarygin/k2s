@@ -1,0 +1,19 @@
+{
+  "config": {
+    "Secure": false,
+    "Kurento": {
+      "Addr": "sipwebrtc2.ddns.net",
+      "WsPort": 8888
+    },
+    "Sip": {
+      "Addr": "sipwebrtc2.ddns.net",
+      "Port": 5560,
+      "WsPort": 5066,
+      "User": {
+        "Name": "1008",
+        "Password": "sippass-90210"
+      },
+      "StunUri": "sipwebrtc2.ddns.net"
+    }
+  }
+}

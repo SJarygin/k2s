@@ -2,12 +2,52 @@
 
 // process.env.DEBUG = 'rtcninja*';
 
-const _kurento = require('kurento-client');
-const _childProcess = require('child_process');
-const _jsSIP = require('jssip');
-const _nodeWebSocket = require('jssip-node-websocket');
+// const _kurento = require('kurento-client');
+// const _childProcess = require('child_process');
+// const _jsSIP = require('jssip');
+// const _nodeWebSocket = require('jssip-node-websocket');
 const _minimist = require('minimist');
+const _sipMedia = require('./SipMedia.js');
+//const _fs = require('mz/fs');
+const _nconf = require('nconf');
 
+const hostName = 'sipwebrtc2.ddns.net';
+const playFileUri = "https://cameras.inetcom.ru/hls/camera12_2.m3u8";
+
+const callNumber = _minimist(process.argv.slice(2), opts = { string: 'call' })['call'];
+const config = _minimist(process.argv.slice(2))['config'];
+const debug = _minimist(process.argv.slice(2))['debug'];
+
+_nconf.file({ file: config });
+
+const sipMediaConfig = _nconf.get('config');
+
+// const sipMediaConfig = {
+//   Secure: 0,
+//   Kurento: {
+//     Addr: hostName,
+//     WsPort: 8888
+//   },
+//   Sip: {
+//     Addr: hostName,
+//     Port: 5560,
+//     WsPort: 5066,
+//     User: {
+//       Name: "1008",
+//       Password: "sippass-90210"
+//     },
+//     StunUri: hostName
+//   }
+// };
+//_fs.writeFileSync('./simple.json', JSON.stringify(sipMediaConfig,null,'\t'), 'utf8');
+
+sipMediaConfig.Debug = debug;
+
+const sipMedia = new _sipMedia.SipMedia(sipMediaConfig, () => {
+  sipMedia.Start(callNumber, playFileUri)
+});
+
+/*
 console.log(`Detected ${GetIpAddress()} IP`);
 
 const _kurentoAddr = 'sipwebrtc2.ddns.net';//'127.0.0.1';
@@ -40,13 +80,13 @@ if (!_callNumber && !_waitForCall) {
   console.log('Usage: nodejs gw.js [--sec] [--call phone_number] [--wait]');
   process.exit(0);
 }
-/*
-    stdout = "+OK Conference 3500-165.22.143.0 (3 members rate: 48000 flags: running|answered|enforce_min|dynamic|exit_sound|enter_sound|video_floor_only|video_rfc4579|livearray_sync|video_floor_lock|transcode_video|video_muxing|minimize_video_encoding|json_status)\n" +
-        "391;sofia/internal/1008@sipwebrtc2.ddns.net:5560;8b3dca93-54c5-4536-b143-467dd6b01775;1008;1008;hear|speak|video|vid-floor;0;0;200\n" +
-        "390;sofia/internal/1004@sipwebrtc2.ddns.net:5560;9988a1ad-6854-42c2-9901-bd3642c9dd3d;1008;1008;hear|speak|video;0;0;200\n" +
-        "389;sofia/internal/1008@sipwebrtc2.ddns.net:5560;d7dec80a-afa5-449f-95a8-9a8cf8d1c546;1008;1008;hear|speak|video|floor;0;0;200";
 
-*/
+    // stdout = "+OK Conference 3500-165.22.143.0 (3 members rate: 48000 flags: running|answered|enforce_min|dynamic|exit_sound|enter_sound|video_floor_only|video_rfc4579|livearray_sync|video_floor_lock|transcode_video|video_muxing|minimize_video_encoding|json_status)\n" +
+    //     "391;sofia/internal/1008@sipwebrtc2.ddns.net:5560;8b3dca93-54c5-4536-b143-467dd6b01775;1008;1008;hear|speak|video|vid-floor;0;0;200\n" +
+    //     "390;sofia/internal/1004@sipwebrtc2.ddns.net:5560;9988a1ad-6854-42c2-9901-bd3642c9dd3d;1008;1008;hear|speak|video;0;0;200\n" +
+    //     "389;sofia/internal/1008@sipwebrtc2.ddns.net:5560;d7dec80a-afa5-449f-95a8-9a8cf8d1c546;1008;1008;hear|speak|video|floor;0;0;200";
+
+
 
 const _fsExecName = _debug ? "./fs_cli" : "fs_cli";
 
@@ -68,7 +108,6 @@ const _fsExecName = _debug ? "./fs_cli" : "fs_cli";
 if (_callNumber && _confCall) {
   _callNumber = `${_callNumber}000`;
 }
-
 
 //process.exit(0);
 
@@ -146,31 +185,31 @@ CallMediaPipeline.prototype.createPipeline = function (ACallback) {
           uri: _recordFileUri
         };
         //APipeline.create('RecorderEndpoint', recordParams, function (AError, ARecorderEndpoint) {
-          APipeline.create('RtpEndpoint', function (AError, ARtpEndpoint) {
-            self.pipeline.RtpEndpoint = ARtpEndpoint;
-            //self.pipeline.RecorderEndpoint = ARecorderEndpoint;
-            // connect to myRTPEndpoint (rx to us)
-            // ARtpEndpoint.connect(ARecorderEndpoint, function (AError) {
-            //   console.log('recorder endpoint connected');
-            // });
-            ARtpEndpoint.on('MediaStateChanged', function (AEvent) {
-              console.log('MediaStateChanged to ' + AEvent.newState);
-              if (_waitForCall && (AEvent.oldState !== AEvent.newState && AEvent.newState === "CONNECTED"))
-                startMedia(APipeline);
-            });
-            ARtpEndpoint.on('ConnectionStateChanged', function (AEvent) {
-              console.log('ConnectionStateChanged to ' + AEvent.newState);
-            });
-            // connect to myRTPEndpoint (tx from us)
-            APlayerEndpoint.connect(ARtpEndpoint, function (AError) {
-              console.log('player endpoint connected');
-            });
-            ARtpEndpoint.generateOffer(function (AError, AOffer) {
-              // this is offer for receiving side (recorder.sdp)
-              // that we will send to asterisk as local offer
-              ACallback(null, AOffer);
-            }); // generateOffer
-          }); // create('RtpEndpoint')
+        APipeline.create('RtpEndpoint', function (AError, ARtpEndpoint) {
+          self.pipeline.RtpEndpoint = ARtpEndpoint;
+          //self.pipeline.RecorderEndpoint = ARecorderEndpoint;
+          // connect to myRTPEndpoint (rx to us)
+          // ARtpEndpoint.connect(ARecorderEndpoint, function (AError) {
+          //   console.log('recorder endpoint connected');
+          // });
+          ARtpEndpoint.on('MediaStateChanged', function (AEvent) {
+            console.log('MediaStateChanged to ' + AEvent.newState);
+            if (_waitForCall && (AEvent.oldState !== AEvent.newState && AEvent.newState === "CONNECTED"))
+              startMedia(APipeline);
+          });
+          ARtpEndpoint.on('ConnectionStateChanged', function (AEvent) {
+            console.log('ConnectionStateChanged to ' + AEvent.newState);
+          });
+          // connect to myRTPEndpoint (tx from us)
+          APlayerEndpoint.connect(ARtpEndpoint, function (AError) {
+            console.log('player endpoint connected');
+          });
+          ARtpEndpoint.generateOffer(function (AError, AOffer) {
+            // this is offer for receiving side (recorder.sdp)
+            // that we will send to asterisk as local offer
+            ACallback(null, AOffer);
+          }); // generateOffer
+        }); // create('RtpEndpoint')
         //}); // create('RecorderEndpoint')
       }); // create('PlayerEndpoint')
     }) // create('MediaPipeline')
@@ -406,3 +445,4 @@ try {
   console.log(AError);
   return;
 }
+*/
