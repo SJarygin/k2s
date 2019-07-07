@@ -15,6 +15,29 @@ class SipMedia {
     this.pipeline = null;
     this.playerUri = '';
     this.RegisteredEvent = ARegisteredEvent;
+    this.history = [];
+    this.userStatus = [];
+
+    // const list = [];
+    // list.push({ number: 1008, title: 'sipmedia' });
+    // console.log(list);
+    // console.log(this.fillHistory(list));
+    //
+    // list.push({ number: 1001, title: 'linphone' });
+    // console.log(list);
+    // console.log(this.fillHistory(list));
+    //
+    // list.push({ number: 1000, title: 'sipml' });
+    // console.log(list);
+    // console.log(this.fillHistory(list));
+    //
+    // list.pop();
+    // console.log(list);
+    // console.log(this.fillHistory(list));
+    //
+    // list.pop();
+    // console.log(list);
+    // console.log(this.fillHistory(list));
 
     //------------------------------------------------------------------------------
     console.log(`Detected ${this.getIpAddress()} IP`);
@@ -48,7 +71,7 @@ class SipMedia {
     const configuration = {
       uri: sipUri,
       password: `${this.options.Sip.User.Password}x${sipUriUser}`,
-      //display_name: reg_sip_user,
+      display_name: `SipMedia.${sipUriUser}`,
       authorization_user: sipUriUser,
       sockets: [sipWs],
       //ws_servers: _sipWsStr,
@@ -265,40 +288,67 @@ class SipMedia {
     }
   }
 
-  State() {
+  Status() {
     const result = {
+      date: new Date(),
       message: 'ready',
       conf: '',
       conf_full: '',
-      list: []
+      list: [],
+      history: []
     };
-    if (this.options.Debug || !this.callNumder) {
-      result.message = 'not ready';
+    if (this.options.Debug) {
+      result.message = 'debug mode';
     }
     else {
       const stdout = _childProcess.execSync(`fs_cli -rRS -x "conference list"`).toString();
 
       // const stdout ='+OK Conference 3500-165.22.143.0 (1 member rate: 48000 flags: running|answered|enforce_min|dynamic|exit_sound|enter_sound|video_floor_only|video_rfc4579|livearray_sync|video_floor_lock|transcode_video|video_muxing|minimize_video_encoding|json_status)\n' +
       //     '443;sofia/internal/1008@sipwebrtc2.ddns.net:5560;9ed42836-772e-4c80-94ba-87a29789877b;1008;1008;hear|speak|video|floor|vid-floor;0;0;200';
-
+      const callNumber = this.callNumder ? this.callNumder : '<unknown>';
       console.log('stdout: ' + stdout);
       const stdoutSplitted = stdout.split("\n");
       const userLines = stdoutSplitted.filter(AItem => AItem.includes(`@${this.options.Sip.Addr}`));
 
       result.message = 'ready';
-      result.conf = `${this.callNumder}`;
-      result.conf_full = `${this.callNumder}-${this.getIpAddress()}`;
+      result.conf = callNumber;
+      result.conf_full = `${callNumber}-${this.getIpAddress()}`;
 
       userLines.forEach(AItem => {
         const itemSpitted = AItem.split(";");
-        result.list.push({ name: itemSpitted[3], caption: itemSpitted[4] });
+        result.list.push({ number: itemSpitted[4], title: itemSpitted[3] });
       });
     }
-    result.date=new Date;
+    result.date = new Date;
+    result.history = this.fillHistory(result.list);
     return result;
   }
 
   //===============================================================
+  fillHistory(AList) {
+    AList.forEach(AItem => {
+      const userStatusItems = this.userStatus.filter(AUserStatusItem => AItem.number === AUserStatusItem.number);
+      if (userStatusItems === undefined || userStatusItems === null || userStatusItems.length === 0) {
+        this.userStatus.push(AItem);
+        const newItem = JSON.parse(JSON.stringify(AItem));
+        newItem.Status = 'connect';
+        newItem.date = new Date;
+        this.history.push(newItem);
+      }
+    });
+
+    this.userStatus.forEach(AUserStatusItem => {
+      const items = AList.filter(AItem => AItem.number === AUserStatusItem.number);
+      if ((items === undefined || items === null || items.length === 0)) {
+        const newItem = JSON.parse(JSON.stringify(AUserStatusItem));
+        newItem.Status = 'disconnect';
+        newItem.date = new Date;
+        this.history.push(newItem);
+      }
+    });
+    return this.history;
+  }
+
   getKurentoClient(ACallback) {
     const self = this;
     if (this.kurentoClient !== null) {

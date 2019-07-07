@@ -82,20 +82,20 @@ app.use('/*', function (req, res, next) {
 // ************************************************************************************************
 app.post('/api/start', function (req, res, next) {
   sipMedia.Start(callNumber, req.body.data);
-  const result = sipMedia.State();
+  const result = sipMedia.Status();
   res.status(200).json(result);
   res.end();
 });
 
 app.post('/api/stop', function (req, res, next) {
   sipMedia.Stop();
-  const result = sipMedia.State();
+  const result = sipMedia.Status();
   res.status(200).json(result);
   res.end();
 });
 
 app.post('/api/status', function (req, res, next) {
-  const result = sipMedia.State();
+  const result = sipMedia.Status();
   res.status(200).json(result);
   res.end();
 });
