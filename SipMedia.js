@@ -264,6 +264,31 @@ class SipMedia {
     }
   }
 
+  State() {
+    if (this.options.Debug || !this.callNumder) return { message: 'not_ready' };
+    const stdout = _childProcess.execSync(`fs_cli -rRS -x "conference list"`).toString();
+
+    // const stdout ='+OK Conference 3500-165.22.143.0 (1 member rate: 48000 flags: running|answered|enforce_min|dynamic|exit_sound|enter_sound|video_floor_only|video_rfc4579|livearray_sync|video_floor_lock|transcode_video|video_muxing|minimize_video_encoding|json_status)\n' +
+    //     '443;sofia/internal/1008@sipwebrtc2.ddns.net:5560;9ed42836-772e-4c80-94ba-87a29789877b;1008;1008;hear|speak|video|floor|vid-floor;0;0;200';
+
+    console.log('stdout: ' + stdout);
+    const stdoutSplitted = stdout.split("\n");
+    const userLines = stdoutSplitted.filter(AItem => AItem.includes(`@${this.options.Sip.Addr}`));
+    const result = {
+      message: 'ready',
+      conf: `${this.callNumder}`,
+      conf_full: `${this.callNumder}-${this.getIpAddress()}`,
+      list: []
+    };
+
+    userLines.forEach(AItem => {
+      const itemSpitted = AItem.split(";");
+      result.list.push({ name: itemSpitted[3], caption: itemSpitted[4] });
+    });
+
+    return result;
+  }
+
   //===============================================================
   getKurentoClient(ACallback) {
     const self = this;

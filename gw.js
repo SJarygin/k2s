@@ -7,7 +7,6 @@ const favicon = require('serve-favicon');
 const session = require("express-session");
 const FileStore = require('session-file-store')(session);
 
-
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -78,11 +77,17 @@ app.use('/*', function (req, res, next) {
 });
 
 app.post('/api/start', function (req, res, next) {
-  sipMedia.Start(callNumber, req.body.uri);
+  sipMedia.Start(callNumber, req.body.data);
+  const result = sipMedia.State();
+  res.status(200).json(result);
+  res.end();
 });
 
 app.post('/api/stop', function (req, res, next) {
   sipMedia.Stop();
+  const result = sipMedia.State();
+  res.status(200).json(result);
+  res.end();
 });
 
 app.use('/main', function (req, res, next) {
