@@ -352,11 +352,18 @@ class SipMedia {
   }
 
   findHistoryItem(ASource) {
-    const result = this.history.find(AItem =>
+    const result = this.history.lastIndexOf(AItem =>
         AItem.number === ASource.number &&
-        AItem.status === ASource.status &&
-        AItem.date === ASource.date);
-    return result !== undefined;
+        AItem.status === ASource.status);
+    if (result === -1)
+      return false;
+    const anotherStateResult = this.history.lastIndexOf(AItem =>
+        AItem.number === ASource.number &&
+        AItem.status !== ASource.status);
+    if (anotherStateResult === -1)
+      return true;
+    return anotherStateResult <= result;
+
   }
 
   getKurentoClient(ACallback) {
