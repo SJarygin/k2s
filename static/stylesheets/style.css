@@ -1,7 +1,7 @@
 body {
     padding: 50px;
     font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-    background-color: #6b6d7b;
+    background-color: #9496a4;
 }
 
 a {
@@ -13,22 +13,25 @@ div {
 }
 
 form div {
-    width: 90%;
-
+    width: 50%;
+    background-color: #7a7ec2;
+    margin-left: 10px;
 }
 
-input {
-    width: 80%;
+input, textarea {
+    width: 50%;
     /*margin-top: 10px;*/
     margin-left: 10px;
 }
 
 .btn_start {
     margin-left: 10px;
+    margin-bottom: 10px;
     alignment: left;
 }
 
 .btn_stop {
     margin-left: 100px;
+    margin-bottom: 10px;
 
 }

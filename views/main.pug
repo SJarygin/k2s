@@ -5,17 +5,23 @@ block content
     p Welcome to #{title}
 
     div
-        p SIP:
+        h2 SIP:
         div
-            p Number: #{callNumber}
-            p URI: #{sipUri}
-            p WS: #{sipWsUri}
-            p stun: #{stunUri}
+            ul
+                li Number: #{callNumber}
+                li URI: #{sipUri}
+                li WS: #{sipWsUri}
+                li stun: #{stunUri}
+        h2 Media:
     form()
         div
-            p Stream URI:
+            h3 Stream URI:
             input.text_uri(type="text", name="uri", required="true", placeholder="URI", value="https://cameras.inetcom.ru/hls/camera12_2.m3u8")
+            br
             br
             button.btn_start(type="button") Start media streaming
             button.btn_stop(type="button") Stop media streaming
+    br
+    br
+    textarea.text_log(name="log", cols=80, rows=40)
     script(src='/javascripts/main.js')
