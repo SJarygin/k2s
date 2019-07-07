@@ -331,9 +331,10 @@ class SipMedia {
       if (userStatusItems === undefined || userStatusItems === null || userStatusItems.length === 0) {
         this.userStatus.push(AItem);
         const newItem = JSON.parse(JSON.stringify(AItem));
-        newItem.Status = 'connect';
+        newItem.status = 'connect';
         newItem.date = new Date;
-        this.history.push(newItem);
+        if (!this.findHistoryItem(newItem))
+          this.history.push(newItem);
       }
     });
 
@@ -341,12 +342,21 @@ class SipMedia {
       const items = AList.filter(AItem => AItem.number === AUserStatusItem.number);
       if ((items === undefined || items === null || items.length === 0)) {
         const newItem = JSON.parse(JSON.stringify(AUserStatusItem));
-        newItem.Status = 'disconnect';
+        newItem.status = 'disconnect';
         newItem.date = new Date;
-        this.history.push(newItem);
+        if (!this.findHistoryItem(newItem))
+          this.history.push(newItem);
       }
     });
     return this.history;
+  }
+
+  findHistoryItem(ASource) {
+    const result = this.history.find(AItem =>
+        AItem.number === ASource.number &&
+        AItem.status === ASource.status &&
+        AItem.date === ASource.date);
+    return result !== undefined;
   }
 
   getKurentoClient(ACallback) {
