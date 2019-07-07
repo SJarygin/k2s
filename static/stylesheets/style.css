@@ -1,37 +1,189 @@
 body {
-    padding: 50px;
-    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-    background-color: #9496a4;
+    /*padding: 50px;*/
+    /*font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;*/
+    /*background-color: #9496a4;*/
+    font: 13px/20px "Lucida Grande", Tahoma, Verdana, sans-serif;
+    color: #404040;
+    background: #0ca3d2;
 }
 
 a {
     color: #00B7FF;
 }
 
-div {
+.container {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    /*grid-template-rows: 10% 40% 40% 10%;*/
+    /*grid-template-rows: 10% 1fr 10%;*/
+    grid-template-rows: 1fr 4fr 4fr 1fr;
+    grid-gap: 5px;
+    grid-template-areas: "h h h h h h h h h h h h" "s s s s l l l l l l l l" "m m m m l l l l l l l l" "f f f f f f f f f f f f";
+
+}
+
+@media screen and (max-width: 640px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 2fr 2fr 5fr 1fr;
+        grid-template-areas:
+                "h"
+                "s"
+                "m"
+                "l"
+                "f";
+    }
+}
+
+.header {
+    grid-area: h;
+}
+
+.footer {
+    grid-area: f;
+}
+
+.container div {
+    -webkit-box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.sip {
+    grid-area: s;
+}
+
+.media {
+    grid-area: m;
+}
+
+.log {
+    grid-area: l;
+}
+
+.sip, .media, .log {
+    /*position: relative;*/
+    margin: 0 auto;
+    /*padding: 20px 20px 20px;*/
+    width: 98%;
+    height: 100%;
+    background: #00f1ff;
+    border-radius: 3px;
+    -webkit-box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    /*Transition*/
+    -webkit-transition: all 0.3s linear;
+    -moz-transition: all 0.3s linear;
+    -o-transition: all 0.3s linear;
+    transition: all 0.3s linear;
+    padding-top: 3px;
+    padding-left: 3px;
+}
+
+input {
     width: 90%;
-}
-
-form div {
-    width: 50%;
-    background-color: #7a7ec2;
-    margin-left: 10px;
-}
-
-input, textarea {
-    width: 50%;
     /*margin-top: 10px;*/
-    margin-left: 10px;
+    /*margin-left: 10px;*/
 }
 
-.btn_start {
-    margin-left: 10px;
-    margin-bottom: 10px;
-    alignment: left;
+.text_log {
+    width: 98%;
+    height: 98%;
+    margin: auto;
+
 }
 
-.btn_stop {
-    margin-left: 100px;
-    margin-bottom: 10px;
+/*.inner_log{*/
+/**/
+/*}*/
 
+/*form div {*/
+/*width: 50%;*/
+/*background-color: #7a7ec2;*/
+/*margin-left: 10px;*/
+/*}*/
+
+/*input, textarea {*/
+/*width: 50%;*/
+/*!*margin-top: 10px;*!*/
+/*margin-left: 10px;*/
+/*}*/
+
+/*.btn_start {*/
+/*margin-left: 10px;*/
+/*margin-bottom: 10px;*/
+/*alignment: left;*/
+/*}*/
+
+/*.btn_stop {*/
+/*margin-left: 100px;*/
+/*margin-bottom: 10px;*/
+
+/*}*/
+
+/* index.pug */
+.join {
+    position: relative;
+    margin: 0 auto;
+    padding: 20px 20px 20px;
+    width: 310px;
+    background: #00b9ff;
+    border-radius: 3px;
+    -webkit-box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    /*Transition*/
+    -webkit-transition: all 0.3s linear;
+    -moz-transition: all 0.3s linear;
+    -o-transition: all 0.3s linear;
+    transition: all 0.3s linear;
+}
+
+.join:before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+    z-index: -1;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+}
+
+.join h3 {
+    margin: -20px -20px 21px;
+    line-height: 40px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #555;
+    text-align: center;
+    text-shadow: 0 1px white;
+    background: #f3f3f3;
+    border-bottom: 1px solid #cfcfcf;
+    border-radius: 3px 3px 0 0;
+    background-image: -webkit-linear-gradient(top, whiteffd, #eef2f5);
+    background-image: -moz-linear-gradient(top, whiteffd, #eef2f5);
+    background-image: -o-linear-gradient(top, whiteffd, #eef2f5);
+    background-image: linear-gradient(to bottom, whiteffd, #eef2f5);
+    -webkit-box-shadow: 0 1px whitesmoke;
+    box-shadow: 0 1px whitesmoke;
+}
+
+.join p {
+    margin: 20px 0 0;
+}
+
+.join p:first-child {
+    margin-top: 0;
+}
+
+.join input[type=text], .join input[type=password] {
+    width: 278px;
+}
+
+.join p.submit {
+    text-align: center;
+}
+
+.join p.submit {
+    position: center;
 }
