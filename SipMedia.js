@@ -333,8 +333,8 @@ class SipMedia {
         const newItem = JSON.parse(JSON.stringify(AItem));
         newItem.status = 'connect';
         newItem.date = new Date;
-        if (!this.findHistoryItem(newItem))
-          this.history.push(newItem);
+        // if (!this.findHistoryItem(newItem))
+        this.history.push(newItem);
       }
     });
 
@@ -344,8 +344,9 @@ class SipMedia {
         const newItem = JSON.parse(JSON.stringify(AUserStatusItem));
         newItem.status = 'disconnect';
         newItem.date = new Date;
-        if (!this.findHistoryItem(newItem))
-          this.history.push(newItem);
+        //if (!this.findHistoryItem(newItem))
+        this.history.push(newItem);
+        this.userStatus = this.userStatus.filter(AItem => AItem.number !== AUserStatusItem.number);
       }
     });
     return this.history;
