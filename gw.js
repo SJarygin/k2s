@@ -2,6 +2,7 @@
 // process.env.DEBUG = 'rtcninja*';
 
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const favicon = require('serve-favicon');
 const session = require("express-session");
@@ -49,6 +50,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'static')));
+
+app.use(cors());
 
 app.use(session({
   secret: 'SipWebRtc-2019',
