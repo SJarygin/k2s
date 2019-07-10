@@ -102,7 +102,20 @@ app.post('/api/status', function (req, res, next) {
 
 app.use('/main', function (req, res, next) {
   res.render('main', {
-    title: 'SipMedia',
+    title: 'SipMedia-Control',
+    sipUri: sipMedia.SipUriForCall,
+    sipWsUri: sipMedia.SipWsUri,
+    stunUri: sipMedia.StunUri,
+    callNumber: callNumber
+  });
+});
+app.use('/phone', function (req, res, next) {
+  res.cookie('sipUri', sipMedia.SipUriForCall);
+  res.cookie('sipWsUri', sipMedia.SipWsUri);
+  res.cookie('stunUri', sipMedia.StunUri);
+
+  res.render('phone', {
+    title: 'SipMedia-Phone',
     sipUri: sipMedia.SipUriForCall,
     sipWsUri: sipMedia.SipWsUri,
     stunUri: sipMedia.StunUri,

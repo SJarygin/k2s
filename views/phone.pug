@@ -1,0 +1,27 @@
+extends layout
+
+block content
+
+    div.phone_container
+        div.phone_header
+            ul
+                //li Number: #{callNumber}
+                li URI: #{sipUri}
+                li WS: #{sipWsUri}
+                li stun: #{stunUri}
+        div.phone_local
+            video#local_video
+        div.phone_remote
+            video#remote_video
+        div.phone_buttons
+            input.text_number(type="text", name="number", required="true", placeholder="", value="3500")
+            br
+            button#call_button(type="button") Call
+            nobr
+            nobr
+            nobr
+            button#hangup_button(type="button") Hangup
+    //script(src='/javascripts/jssip-3.3.6.js')
+    //script(src='/javascripts/phone_jssip.js')
+    script(src='/javascripts/sip-0.14.6.js')
+    script(src='/javascripts/phone_sipjs.js')

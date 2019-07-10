@@ -26,12 +26,7 @@ a {
     .container {
         grid-template-columns: 1fr;
         grid-template-rows: 1fr 2fr 2fr 5fr 1fr;
-        grid-template-areas:
-                "h"
-                "s"
-                "m"
-                "l"
-                "f";
+        grid-template-areas: "h" "s" "m" "l" "f";
     }
 }
 
@@ -43,7 +38,7 @@ a {
     grid-area: f;
 }
 
-.container div {
+.container, .phone_container div {
     -webkit-box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
     box-shadow: 0 0 200px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
     padding-left: 3px;
@@ -93,33 +88,43 @@ input {
 
 }
 
-/*.inner_log{*/
-/**/
-/*}*/
+/* phone.js */
+.phone_container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /*grid-template-rows: 10% 40% 40% 10%;*/
+    /*grid-template-rows: 10% 1fr 10%;*/
+    grid-template-rows: 0.3fr 4fr 0.3fr;
+    grid-gap: 5px;
+    grid-template-areas:
+            "ph ph ph ph"
+            "pl pr pr pr"
+            "pb pb pb pb";
+}
 
-/*form div {*/
-/*width: 50%;*/
-/*background-color: #7a7ec2;*/
-/*margin-left: 10px;*/
-/*}*/
+.phone_header {
+    grid-area: ph;
+}
 
-/*input, textarea {*/
-/*width: 50%;*/
-/*!*margin-top: 10px;*!*/
-/*margin-left: 10px;*/
-/*}*/
+div.phone_local {
+    grid-area: pl;
+}
 
-/*.btn_start {*/
-/*margin-left: 10px;*/
-/*margin-bottom: 10px;*/
-/*alignment: left;*/
-/*}*/
+div.phone_remote {
+    grid-area: pr;
+}
 
-/*.btn_stop {*/
-/*margin-left: 100px;*/
-/*margin-bottom: 10px;*/
+div.phone_buttons {
+    grid-area: pb;
+}
 
-/*}*/
+video {
+    /*position: absolute;*/
+    width: 100%;
+    height: auto;
+    top: 0;
+    left: 0
+}
 
 /* index.pug */
 .join {
