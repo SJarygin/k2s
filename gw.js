@@ -73,7 +73,7 @@ app.post('/login',
 
 app.use('/', indexRouter);
 app.use('/*', function (req, res, next) {
-  if (req.isAuthenticated()) {
+  if (req.baseUrl.startsWith('/api') || req.isAuthenticated()) {
     return next()
   }
   res.redirect('/')
@@ -102,6 +102,11 @@ app.post('/api/status', function (req, res, next) {
   res.status(200).json(result);
   res.end();
 });
+// ************************************************************************************************
+// ************************************************************************************************
+// ************************************************************************************************
+// Pages
+// ************************************************************************************************
 
 app.use('/main', function (req, res, next) {
   res.render('main', {
