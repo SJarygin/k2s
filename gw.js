@@ -109,6 +109,7 @@ app.post('/api/status', function (req, res, next) {
 // ************************************************************************************************
 
 app.use('/main', function (req, res, next) {
+  res.cookie('sipUser', sipMedia.sipUser);
   res.render('main', {
     title: 'SipMedia-Control',
     sipUri: sipMedia.SipUriForCall,
@@ -121,6 +122,7 @@ app.use('/phone', function (req, res, next) {
   res.cookie('sipUri', sipMedia.SipUriForCall);
   res.cookie('sipWsUri', sipMedia.SipWsUri);
   res.cookie('stunUri', sipMedia.StunUri);
+  res.cookie('sipUser', sipMedia.sipUser);
 
   res.render('phone', {
     title: 'SipMedia-Phone',

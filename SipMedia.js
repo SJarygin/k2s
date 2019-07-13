@@ -56,6 +56,7 @@ class SipMedia {
     console.log(`sipWsUri: ${this.SipWsUri}`);
 
     const sipUriUser = this.options.Sip.User.Name;
+    this.sipUser = sipUriUser;
     const sipUriTransport = this.options.Secure ? 'tls' : 'tcp';
     const sipUriAddr = this.options.Sip.Addr;
     const sipUriPort = this.options.Sip.Port;

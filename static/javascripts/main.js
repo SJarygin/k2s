@@ -1,14 +1,17 @@
 'use strict';
 
-const log = $('.text_log')[0];
+const log = $('.text_log');
+const btnStart = $('.btn_start');
+const btnStop = $('.btn_stop');
+const sipUser = $.cookie('sipUser');
 
-$('.btn_start').on('click', function (AData) {
+btnStart.on('click', function (AData) {
   ApiSend('start', $('.text_uri')[0].value, AResult => {
     LogJson(AResult);
   });
 });
 
-$('.btn_stop').on('click', function (AData) {
+btnStop.on('click', function (AData) {
   ApiSend('stop', '', AResult => {
     LogJson(AResult);
   });
@@ -42,7 +45,7 @@ function ApiSend(ACommand, AData, ACallback) {
 }
 
 function DateStr(ADate) {
-  return ADate.substring(2, ADate.length - 5).replace('T',' ');
+  return ADate.substring(2, ADate.length - 5).replace('T', ' ');
 }
 
 function LogJson(AJsonData) {
@@ -80,6 +83,10 @@ function LogJson(AJsonData) {
   //             }]
   //     }
 
+  const hasConf = AJsonData.list.find(AItem => AItem.number === sipUser) !== undefined;
+  btnStart.attr('disabled', hasConf);
+  btnStop.attr('disabled', !hasConf);
+
   let cnt = 1;
   const connectedList = AJsonData.list.map(AItem => `${cnt++}) ${AItem.number} (${AItem.title})`).join('\n');
   const historyList = AJsonData.history.sort(function (a, b) {
@@ -92,17 +99,17 @@ function LogJson(AJsonData) {
     return 0;
   }).map(AItem => `${DateStr(AItem.date)}) ${AItem.status} ${AItem.number} (${AItem.title})`).join('\n');
 
-  log.value =
+  log.text(
       `Last refresh: ${DateStr(AJsonData.date)} 
-Conf: ${AJsonData.conf} (${AJsonData.conf_full}) [${AJsonData.message}]
+Conf: ${AJsonData.conf} (${AJsonData.conf_full}) [${AJsonData.message}] [${hasConf?'':'NOT '}connected]
 
 Connected:
 ${connectedList}
 
 History(order by date desc):
-${historyList}`;
-//${JSON.stringify(AJsonData, null, '\t')}`;
-
+${historyList}`
+//${JSON.stringify(AJsonData, null, '\t')}`
+);
   // const xx =
   //     {
   //       "date":
