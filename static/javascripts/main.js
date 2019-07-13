@@ -41,6 +41,10 @@ function ApiSend(ACommand, AData, ACallback) {
       });
 }
 
+function DateStr(ADate) {
+  return ADate.substring(2, ADate.length - 5).replace('T',' ');
+}
+
 function LogJson(AJsonData) {
   console.log(AJsonData);
   //log.value = JSON.stringify(AJsonData, null, '\t');
@@ -86,10 +90,10 @@ function LogJson(AJsonData) {
       return 1;
     }
     return 0;
-  }).map(AItem => `${AItem.date}) ${AItem.status} ${AItem.number} (${AItem.title})`).join('\n');
+  }).map(AItem => `${DateStr(AItem.date)}) ${AItem.status} ${AItem.number} (${AItem.title})`).join('\n');
 
   log.value =
-      `Last refresh: ${AJsonData.date} 
+      `Last refresh: ${DateStr(AJsonData.date)} 
 Conf: ${AJsonData.conf} (${AJsonData.conf_full}) [${AJsonData.message}]
 
 Connected:
