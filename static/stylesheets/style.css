@@ -69,6 +69,7 @@ body {
 
 .log {
     grid-area: l;
+    font-family: monospace;
 }
 
 .sip, .media, .log {
