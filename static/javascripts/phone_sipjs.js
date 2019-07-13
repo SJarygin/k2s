@@ -20,6 +20,12 @@ const options = {
       //audio: document.getElementById('remoteVideo')
     }
   },
+  // constraints: {
+  //   video: {
+  //     width: 1024,
+  //     height: 768
+  //   }
+  // },
   ua: {
     uri: `${sipUser}@${sipUri}`,
     password: `sippass-90210x${sipUser}`,
@@ -38,6 +44,16 @@ SIP.Web.SessionDescriptionHandler.prototype.addDefaultIceServers = function (rtc
 };
 
 const simpleUa = new SIP.Web.Simple(options);
+
+// simpleUa.session.on('userMediaRequest', function (AData) {
+//   console.log(`userMediaRequest: `);
+//   return {
+//     video: {
+//       width: 1024,
+//       height: 768
+//     }
+//   }
+// });
 
 simpleUa.on('registered', function (AData) {
   console.log(`registered: `);

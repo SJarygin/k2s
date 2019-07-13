@@ -7,8 +7,13 @@ body {
     background: #0ca3d2;
 }
 
-a {
-    color: #00B7FF;
+#phone_link {
+    color: #000000;
+    display: inline-block;
+    text-align: right;
+    float: right;
+    position: relative;
+    padding-right: 10px;
 }
 
 .container {
@@ -16,22 +21,30 @@ a {
     grid-template-columns: repeat(12, 1fr);
     /*grid-template-rows: 10% 40% 40% 10%;*/
     /*grid-template-rows: 10% 1fr 10%;*/
-    grid-template-rows: 1fr 4fr 4fr 1fr;
+    grid-template-rows: 0.5fr 4fr 4fr 0.5fr;
     grid-gap: 5px;
-    grid-template-areas: "h h h h h h h h h h h h" "s s s s l l l l l l l l" "m m m m l l l l l l l l" "f f f f f f f f f f f f";
+    grid-template-areas:
+            "h h h h h h h h h h hl hl"
+            "s s s s l l l l l l l l"
+            "m m m m l l l l l l l l"
+            "f f f f f f f f f f f f";
 
 }
 
 @media screen and (max-width: 1024px) {
     .container {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 2fr 2fr 5fr 1fr;
-        grid-template-areas: "h" "s" "m" "l" "f";
+        grid-template-areas: "h hl" "s s" "m m" "l l" "f f";
     }
 }
 
 .header {
     grid-area: h;
+}
+
+.header_link {
+    grid-area: hl;
 }
 
 .footer {
@@ -97,7 +110,7 @@ input {
     grid-template-rows: 0.3fr 4fr 0.3fr;
     grid-gap: 5px;
     grid-template-areas:
-            "ph ph ph ph"
+            "ph ph ph hl"
             "pl pr pr pr"
             "pb pb pb pb";
 }
